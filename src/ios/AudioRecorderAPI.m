@@ -17,22 +17,15 @@
         [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord error:&err];
         if (err)
         {
-            NSLog(@"%@ %d %@", [err domain], [err code], [[err userInfo] description]);
+            NSLog(@"%@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
         }
         
-        err = nil;
-        [audioSession overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:&err];
-        
-        
-        if(err){
-            NSLog(@"%@", [err description]);
-        }
         err = nil;
         [audioSession setActive:YES error:&err];
         
         if (err)
         {
-            NSLog(@"%@ %d %@", [err domain], [err code], [[err userInfo] description]);
+            NSLog(@"%@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
         }
         
         NSMutableDictionary *recordSettings = [[NSMutableDictionary alloc] init];
@@ -52,7 +45,7 @@
         err = nil;
         recorder = [[AVAudioRecorder alloc] initWithURL:url settings:recordSettings error:&err];
         if(!recorder){
-            NSLog(@"recorder: %@ %d %@", [err domain], [err code], [[err userInfo] description]);
+            NSLog(@"recorder: %@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
             return;
         }
         
@@ -98,7 +91,7 @@
         [player prepareToPlay];
         [player play];
         if (err) {
-            NSLog(@"%@ %d %@", [err domain], [err code], [[err userInfo] description]);
+            NSLog(@"%@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
         }
         NSLog(@"playing");
     }];
@@ -111,11 +104,20 @@
 }
 
 - (void)audioRecorderDidFinishRecording:(AVAudioRecorder *)recorder successfully:(BOOL)flag {
+    AVAudioSession *audioSession = [AVAudioSession sharedInstance];
+    NSError *err;
+    
+    [audioSession setCategory:AVAudioSessionCategoryPlayback error:&err];
+    if (err)
+    {
+        NSLog(@"%@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
+    }
+    
     NSURL *url = [NSURL fileURLWithPath: recorderFilePath];
-    NSError *err = nil;
+    err = nil;
     NSData *audioData = [NSData dataWithContentsOfFile:[url path] options: 0 error:&err];
     if(!audioData) {
-        NSLog(@"audio data: %@ %d %@", [err domain], [err code], [[err userInfo] description]);
+        NSLog(@"audio data: %@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
     } else {
         NSLog(@"recording saved: %@", recorderFilePath);
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:recorderFilePath];
