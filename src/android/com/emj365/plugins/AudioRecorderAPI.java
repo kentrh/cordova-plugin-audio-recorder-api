@@ -21,6 +21,8 @@ public class AudioRecorderAPI extends CordovaPlugin {
   private MediaRecorder myRecorder;
   private String outputFile;
   private CountDownTimer countDowntimer;
+  private boolean isRecording;
+  private MediaPlayer myPlayer;
 
   @Override
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
@@ -55,6 +57,8 @@ public class AudioRecorderAPI extends CordovaPlugin {
         return false;
       }
 
+      isRecording = true;
+
       countDowntimer = new CountDownTimer(seconds * 1000, 1000) {
         public void onTick(long millisUntilFinished) {}
         public void onFinish() {
@@ -66,17 +70,25 @@ public class AudioRecorderAPI extends CordovaPlugin {
     }
 
     if (action.equals("stop")) {
-      countDowntimer.cancel();
-      stopRecord(callbackContext);
-      return true;
+      if (isRecording) {
+        countDowntimer.cancel();
+        stopRecord(callbackContext);
+        return true;
+      }
+      if (myPlayer.isPlaying()) {
+        myPlayer.stop();
+        return true;
+      }
+      
+      
     }
 
     if (action.equals("playback")) {
-      MediaPlayer mp = new MediaPlayer();
-      mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+      myPlayer = new MediaPlayer();
+      myPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
       try {
         FileInputStream fis = new FileInputStream(new File(outputFile));
-        mp.setDataSource(fis.getFD());
+        myPlayer.setDataSource(fis.getFD());
       } catch (IllegalArgumentException e) {
         e.printStackTrace();
       } catch (SecurityException e) {
@@ -87,18 +99,27 @@ public class AudioRecorderAPI extends CordovaPlugin {
         e.printStackTrace();
       }
       try {
-        mp.prepare();
+        myPlayer.prepare();
       } catch (IllegalStateException e) {
         e.printStackTrace();
       } catch (IOException e) {
         e.printStackTrace();
       }
-      mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-        public void onCompletion(MediaPlayer mp) {
+      myPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+        public void onCompletion(MediaPlayer myPlayer) {
           callbackContext.success("playbackComplete");
         }
       });
-      mp.start();
+      myPlayer.start();
+      return true;
+    }
+
+    if (action.equals("isRecording")) {
+      cordova.getThreadPool().execute(new Runnable() {
+        public void run() {
+          callbackContext.success(isRecording + "");
+        }
+      });
       return true;
     }
 
@@ -106,6 +127,7 @@ public class AudioRecorderAPI extends CordovaPlugin {
   }
 
   private void stopRecord(final CallbackContext callbackContext) {
+    isRecording = false;
     myRecorder.stop();
     myRecorder.release();
     cordova.getThreadPool().execute(new Runnable() {
