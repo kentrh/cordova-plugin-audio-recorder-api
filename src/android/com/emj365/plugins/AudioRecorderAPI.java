@@ -34,7 +34,7 @@ public class AudioRecorderAPI extends CordovaPlugin {
       seconds = 7;
     }
     if (action.equals("record")) {
-      outputFile = context.getFilesDir() + "/" + UUID.randomUUID().toString() + ".m4a";
+      outputFile = context.getFilesDir() + "/files/" + UUID.randomUUID().toString();
       myRecorder = new MediaRecorder();
       myRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
       myRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
