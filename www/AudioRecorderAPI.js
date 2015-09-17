@@ -1,6 +1,10 @@
 function AudioRecorderAPI() {
 }
 
+AudioRecorderAPI.prototype.prepareForRecord = function (successCallback, errorCallback) {
+  cordova.exec(successCallback, errorCallback, "AudioRecorderAPI", "prepareForRecord", []);
+};
+
 AudioRecorderAPI.prototype.record = function (successCallback, errorCallback, duration) {
   cordova.exec(successCallback, errorCallback, "AudioRecorderAPI", "record", duration ? [duration] : []);
 };

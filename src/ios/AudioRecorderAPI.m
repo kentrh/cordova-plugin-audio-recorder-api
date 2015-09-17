@@ -5,12 +5,11 @@
 
 #define RECORDINGS_FOLDER [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]
 
-- (void)record:(CDVInvokedUrlCommand*)command {
+- (void)prepareForRecord:(CDVInvokedUrlCommand *)command
+{
     _command = command;
-    duration = [_command.arguments objectAtIndex:0];
     
     [self.commandDelegate runInBackground:^{
-        
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
         
         NSError *err;
@@ -26,6 +25,35 @@
         if (err)
         {
             NSLog(@"%@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
+        }
+        hasPrepared = YES;
+        NSLog(@"prepeared for recording");
+    }];
+}
+
+- (void)record:(CDVInvokedUrlCommand*)command {
+    _command = command;
+    duration = [_command.arguments objectAtIndex:0];
+    
+    [self.commandDelegate runInBackground:^{
+        
+        AVAudioSession *audioSession = [AVAudioSession sharedInstance];
+        NSError *err;
+        if (!hasPrepared) {
+            
+            [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord error:&err];
+            if (err)
+            {
+                NSLog(@"%@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
+            }
+            
+            err = nil;
+            [audioSession setActive:YES error:&err];
+            
+            if (err)
+            {
+                NSLog(@"%@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
+            }
         }
         
         NSMutableDictionary *recordSettings = [[NSMutableDictionary alloc] init];
@@ -104,6 +132,7 @@
 }
 
 - (void)audioRecorderDidFinishRecording:(AVAudioRecorder *)recorder successfully:(BOOL)flag {
+    hasPrepared = NO;
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
     NSError *err;
     

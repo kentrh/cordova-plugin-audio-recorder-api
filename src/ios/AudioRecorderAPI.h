@@ -8,8 +8,10 @@
   AVAudioPlayer *player;
   CDVPluginResult *pluginResult;
   CDVInvokedUrlCommand *_command;
+  BOOL hasPrepared;
 }
 
+- (void)prepareForRecord:(CDVInvokedUrlCommand*)command;
 - (void)record:(CDVInvokedUrlCommand*)command;
 - (void)stop:(CDVInvokedUrlCommand*)command;
 - (void)playback:(CDVInvokedUrlCommand*)command;
