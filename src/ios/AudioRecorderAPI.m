@@ -5,6 +5,8 @@
 
 #define RECORDINGS_FOLDER [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]
 
+#define ERROR_PERMISSION_DENIED 1
+
 - (void)prepareForRecord:(CDVInvokedUrlCommand *)command
 {
     _command = command;
@@ -38,56 +40,66 @@
     [self.commandDelegate runInBackground:^{
         
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
-        NSError *err;
-        if (!hasPrepared) {
-            
-            [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord error:&err];
-            if (err)
-            {
-                NSLog(@"%@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
+        
+        [audioSession requestRecordPermission:^(BOOL granted) {
+            if (granted) {
+                NSError *err;
+                if (!hasPrepared) {
+                    
+                    [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord error:&err];
+                    if (err)
+                    {
+                        NSLog(@"%@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
+                    }
+                    
+                    err = nil;
+                    [audioSession setActive:YES error:&err];
+                    
+                    if (err)
+                    {
+                        NSLog(@"%@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
+                    }
+                }
+                
+                NSMutableDictionary *recordSettings = [[NSMutableDictionary alloc] init];
+                [recordSettings setValue:[NSNumber numberWithInt:kAudioFormatMPEG4AAC] forKey:AVFormatIDKey];
+                [recordSettings setValue:[NSNumber numberWithFloat:44100.0] forKey:AVSampleRateKey];
+                [recordSettings setValue:[NSNumber numberWithInt: 1] forKey:AVNumberOfChannelsKey];
+                [recordSettings setValue:[NSNumber numberWithInt:16] forKey:AVLinearPCMBitDepthKey];
+                [recordSettings setValue:[NSNumber numberWithBool:NO] forKey:AVLinearPCMIsBigEndianKey];
+                [recordSettings setValue:[NSNumber numberWithBool:NO] forKey:AVLinearPCMIsFloatKey];
+                
+                // Create a new dated file
+                NSString *uuid = [[NSUUID UUID] UUIDString];
+                recorderFilePath = [NSString stringWithFormat:@"%@/%@.m4a", RECORDINGS_FOLDER, uuid];
+                NSLog(@"recording file path: %@", recorderFilePath);
+                
+                NSURL *url = [NSURL fileURLWithPath:recorderFilePath];
+                err = nil;
+                recorder = [[AVAudioRecorder alloc] initWithURL:url settings:recordSettings error:&err];
+                if(!recorder){
+                    NSLog(@"recorder: %@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
+                    return;
+                }
+                
+                [recorder setDelegate:self];
+                
+                if (![recorder prepareToRecord]) {
+                    NSLog(@"prepareToRecord failed");
+                    return;
+                }
+                
+                if (![recorder recordForDuration:(NSTimeInterval)[duration intValue]]) {
+                    NSLog(@"recordForDuration failed");
+                    return;
+                }
+
+            } else {
+                NSLog(@"Permission to microphone denied");
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsInt:ERROR_PERMISSION_DENIED];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
             }
-            
-            err = nil;
-            [audioSession setActive:YES error:&err];
-            
-            if (err)
-            {
-                NSLog(@"%@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
-            }
-        }
-        
-        NSMutableDictionary *recordSettings = [[NSMutableDictionary alloc] init];
-        [recordSettings setValue:[NSNumber numberWithInt:kAudioFormatMPEG4AAC] forKey:AVFormatIDKey];
-        [recordSettings setValue:[NSNumber numberWithFloat:44100.0] forKey:AVSampleRateKey];
-        [recordSettings setValue:[NSNumber numberWithInt: 1] forKey:AVNumberOfChannelsKey];
-        [recordSettings setValue:[NSNumber numberWithInt:16] forKey:AVLinearPCMBitDepthKey];
-        [recordSettings setValue:[NSNumber numberWithBool:NO] forKey:AVLinearPCMIsBigEndianKey];
-        [recordSettings setValue:[NSNumber numberWithBool:NO] forKey:AVLinearPCMIsFloatKey];
-        
-        // Create a new dated file
-        NSString *uuid = [[NSUUID UUID] UUIDString];
-        recorderFilePath = [NSString stringWithFormat:@"%@/%@.m4a", RECORDINGS_FOLDER, uuid];
-        NSLog(@"recording file path: %@", recorderFilePath);
-        
-        NSURL *url = [NSURL fileURLWithPath:recorderFilePath];
-        err = nil;
-        recorder = [[AVAudioRecorder alloc] initWithURL:url settings:recordSettings error:&err];
-        if(!recorder){
-            NSLog(@"recorder: %@ %ld %@", [err domain], (long)[err code], [[err userInfo] description]);
-            return;
-        }
-        
-        [recorder setDelegate:self];
-        
-        if (![recorder prepareToRecord]) {
-            NSLog(@"prepareToRecord failed");
-            return;
-        }
-        
-        if (![recorder recordForDuration:(NSTimeInterval)[duration intValue]]) {
-            NSLog(@"recordForDuration failed");
-            return;
-        }
+        }];
         
     }];
 }
