@@ -7,6 +7,20 @@
 
 #define ERROR_PERMISSION_DENIED 1
 
+- (void)hasMicrophoneAccess:(CDVInvokedUrlCommand*)command
+{
+    _command = command;
+
+    [self.commandDelegate runInBackground:^{
+        AVAudioSession *audioSession = [AVAudioSession sharedInstance];
+        
+        [audioSession requestRecordPermission:^(BOOL granted) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:granted];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
+        }];
+    }];
+}
+
 - (void)prepareForRecord:(CDVInvokedUrlCommand *)command
 {
     _command = command;

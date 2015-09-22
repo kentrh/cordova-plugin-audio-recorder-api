@@ -10,7 +10,7 @@
   CDVInvokedUrlCommand *_command;
   BOOL hasPrepared;
 }
-
+- (void)hasMicrophoneAccess:(CDVInvokedUrlCommand*)command;
 - (void)prepareForRecord:(CDVInvokedUrlCommand*)command;
 - (void)record:(CDVInvokedUrlCommand*)command;
 - (void)stop:(CDVInvokedUrlCommand*)command;

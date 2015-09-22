@@ -1,23 +1,27 @@
 function AudioRecorderAPI() {
 }
 
-AudioRecorderAPI.prototype.prepareForRecord = function (successCallback, errorCallback) {
+AudioRecorderAPI.prototype.hasMicrophoneAccess = function(successCallback, errorCallback) {
+  cordova.exec(successCallback, errorCallback, "AudioRecorderAPI", "hasMicrophoneAccess", []);
+};
+
+AudioRecorderAPI.prototype.prepareForRecord = function(successCallback, errorCallback) {
   cordova.exec(successCallback, errorCallback, "AudioRecorderAPI", "prepareForRecord", []);
 };
 
-AudioRecorderAPI.prototype.record = function (successCallback, errorCallback, duration) {
+AudioRecorderAPI.prototype.record = function(successCallback, errorCallback, duration) {
   cordova.exec(successCallback, errorCallback, "AudioRecorderAPI", "record", duration ? [duration] : []);
 };
 
-AudioRecorderAPI.prototype.stop = function (successCallback, errorCallback) {
+AudioRecorderAPI.prototype.stop = function(successCallback, errorCallback) {
   cordova.exec(successCallback, errorCallback, "AudioRecorderAPI", "stop", []);
 };
 
-AudioRecorderAPI.prototype.playback = function (successCallback, errorCallback) {
+AudioRecorderAPI.prototype.playback = function(successCallback, errorCallback) {
   cordova.exec(successCallback, errorCallback, "AudioRecorderAPI", "playback", []);
 };
 
-AudioRecorderAPI.install = function () {
+AudioRecorderAPI.install = function() {
   if (!window.plugins) {
     window.plugins = {};
   }

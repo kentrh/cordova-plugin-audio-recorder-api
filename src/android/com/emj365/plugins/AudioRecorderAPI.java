@@ -86,6 +86,10 @@ public class AudioRecorderAPI extends CordovaPlugin {
       return true;
     }
 
+    if (action.equals("hasMicrophoneAccess")) {
+      return true;
+    }
+
     if (action.equals("playback")) {
       myPlayer = new MediaPlayer();
       myPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
